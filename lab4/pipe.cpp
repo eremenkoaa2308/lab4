@@ -15,7 +15,7 @@ pipe::pipe()
     name = "Test";
     length = 10;
     diameter = 20;
-    inRepair = true;
+    inRepair = false;
 }
 string pipe::GetName() const
 {

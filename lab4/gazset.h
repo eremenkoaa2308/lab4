@@ -11,6 +11,7 @@ private:
 	int idc1;
 	cs c2;
 	int idc2;
+	double q;
 public:
 	gazset(pipe pe, int i, cs c11, int i1, cs cs22, int i2);
 	gazset();
@@ -20,5 +21,7 @@ public:
 	cs getCs2() const;
 	int getCs1ID() const;
 	int getCs2ID() const;
+	double getQ() const;
+	void calculateQ();
 };
 

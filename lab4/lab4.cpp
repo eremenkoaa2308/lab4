@@ -15,6 +15,7 @@
 #include <stack>
 #include <queue>
 using namespace std;
+const int MAX = 100;
 
 
 
@@ -1237,7 +1238,119 @@ void delPC(map<int, pipe>& Pipes, map<int, cs>& Css, map<int, gazset>& Gaz) {
     // Обновляем топологическую сортировку
     topolsort(Gaz);
 }
+// BFS для поиска пути в остаточном графе
+bool bfs(int residualGraph[MAX][MAX], int s, int t, int parent[]) {
+    bool visited[MAX] = { false };
+    queue<int> q;
+    q.push(s);
+    visited[s] = true;
+    parent[s] = -1;
 
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+
+        for (int v = 0; v < MAX; v++) {
+            if (!visited[v] && residualGraph[u][v] > 0) {
+                q.push(v);
+                parent[v] = u;
+                visited[v] = true;
+                if (v == t) return true; // Если достигли стока
+            }
+
+        }
+    }
+    return false; // Путь не найден
+}
+
+// Алгоритм Форда-Фалкерсона для map
+int fordFulkerson(map<pair<int, int>, int>& gasNetwork, int s, int t) {
+    int graph[MAX][MAX] = { 0 };
+
+    // Заполняем граф пропускными способностями из map
+    for (const auto& entry : gasNetwork) {
+        int u = entry.first.first;
+        int v = entry.first.second;
+        int capacity = entry.second;
+        graph[u][v] = capacity;
+    }
+
+    int residualGraph[MAX][MAX];
+    for (int u = 0; u < MAX; u++)
+        for (int v = 0; v < MAX; v++)
+            residualGraph[u][v] = graph[u][v];
+
+    int parent[MAX];
+    int maxFlow = 0;
+
+    // Пока существует путь от источника до стока
+    while (bfs(residualGraph, s, t, parent)) {
+        int pathFlow = INT_MAX;
+        for (int v = t; v != s; v = parent[v]) {
+            int u = parent[v];
+            pathFlow = min(pathFlow, residualGraph[u][v]);
+        }
+
+        // Обновляем остаточный граф
+        for (int v = t; v != s; v = parent[v]) {
+            int u = parent[v];
+            residualGraph[u][v] -= pathFlow;
+            residualGraph[v][u] += pathFlow;
+        }
+
+        maxFlow += pathFlow;
+    }
+
+    return maxFlow;
+}
+
+// Функция для вызова алгоритма Форда-Фалкерсона
+void calculateMaxFlow(map<int, gazset>& Gaz, set<int>& usedCs) {
+    for (auto& entry : Gaz) {
+        entry.second.calculateQ();
+    }
+    int startCsId, endCsId;
+
+    // Запрос source (истока)
+    while (true) {
+        cout << "Enter the ID of cs that would be the source of the flow: " << endl;;
+        cin >> startCsId;
+
+        if (usedCs.count(startCsId)) {
+            cout << "Successfully chosen the source!"<<endl;
+            break;
+        }
+        else {
+            cout << "Incorrect ID! Try again!"<<endl;
+        }
+    }
+
+    // Запрос sink (стока)
+    while (true) {
+        cout << "Enter the ID of cs that would be the sink of the flow: "<<endl;
+        cin >> endCsId;
+
+        if (usedCs.count(endCsId) && endCsId != startCsId) {
+            cout << "Successfully chosen the source!"<<endl;
+            break;
+        }
+        else {
+            cout << "Incorrect ID! Or ID is the same with the source! Try again!"<<endl;
+        }
+    }
+
+    // Конвертируем map с gazset в map<pair<int, int>, int> для передачи данных
+    map<pair<int, int>, int> gasNetwork;
+    for (const auto& pair : Gaz) {
+        int u = pair.second.getCs1ID();
+        int v = pair.second.getCs2ID();
+        int capacity = static_cast<int>(pair.second.getQ());
+        gasNetwork[{u, v}] = capacity;
+    }
+
+    double maxFlow = fordFulkerson(gasNetwork, startCsId, endCsId);
+    cout << "Max flow is: " << maxFlow << endl;
+}
 int main() {
     int i = 0;
     int ic = 0;
@@ -1302,6 +1415,9 @@ int main() {
             topolsort(Gaz);
             break;
         }
+        case 14:
+            calculateMaxFlow(Gaz, usedCs);
+            break;
         case 0:
             logMessage("Program finished");
             return 0;

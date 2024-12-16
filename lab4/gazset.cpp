@@ -8,6 +8,12 @@ gazset::gazset(pipe pe, int i, cs c11, int i1, cs cs22, int i2)
 	idc1 = i1;
 	c2 = cs22;
 	idc2 = i2;
+	if (p.GetInRepair() == 0 || p.GetInRepair() == false) {
+		q = sqrt(abs(c1.GetNumFac() - c2.GetNumFac()) / (p.GetLength())) * pow(p.GetDiameter(), 2.5);
+	}
+	else {
+		q = 0;
+	}
 }
 
 gazset::gazset()
@@ -45,4 +51,20 @@ int gazset::getCs1ID() const
 int gazset::getCs2ID() const
 {
 	return idc2;
+}
+
+double gazset::getQ() const
+{
+	return q;
+}
+
+void gazset::calculateQ()
+{
+	if (p.GetInRepair() == 0 || p.GetInRepair() == false) {
+		q = c2.GetNumWorkFac() * c1.GetNumWorkFac() * pow(p.GetDiameter(), 2.5) / (pow(p.GetLength(), 3.5));
+	}
+	else {
+		q = 0;
+	}
+
 }
